@@ -25,7 +25,7 @@ num_labels = 10
 gsdr = GSDRStack()
 gsdr.add(input_count=data.shape[1], hidden_count=256, sparsity=0.1, forced_latent_count=labels.shape[0])
 
-forced_latents = np.eye(labels.shape[0])
+forced_latents = np.eye(num_labels)
 
 # Train once for each data point
 for i in range(data.shape[0]):
