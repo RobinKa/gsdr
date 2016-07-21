@@ -7,9 +7,7 @@ Generative Sparse Distributed Representations, a fast generative model written i
     - numpy
     
 # Installation
-`pip install gsdr`
-OR
-Clone and `python setup.py install`
+`pip install gsdr` or clone and `python setup.py install`
 
 # Usage
 (More extensive examples and IPython notebooks can be found in examples/)
@@ -30,7 +28,7 @@ gsdr.add(input_count=data.shape[1], hidden_count=256, sparsity=0.1, forced_laten
 forced_latents = np.eye(labels.shape[0])
 
 # Train once for each data point
-for i in range(data.shape[1]):
+for i in range(data.shape[0]):
     gsdr.train(data[i], forced_latents={0: forced_latents[labels[i]]})
     
 # Generate one example for each label
@@ -49,12 +47,12 @@ gsdr = GSDRStack()
 gsdr.add(input_count=data.shape[1], hidden_count=256, sparsity=0.1)
 
 # Train once for each data point
-for i in range(data.shape[1]):
+for i in range(data.shape[0]):
     gsdr.train(data[i])
     
 states = np.eye(hidden_count)
 
 # Generate one example for each one-hot state
-for i in range(num_labels):
+for i in range(hidden_count):
     generated = gsdr.generate(states[i])
 ```
