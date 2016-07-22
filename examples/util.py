@@ -9,6 +9,7 @@ def get_mnist():
     
     # Normalize between 0 and 1
     mnist.data = mnist.data.astype(np.float32) / 255.0
+    mnist.target = mnist.target.astype(np.int32)
 
     return mnist.data, mnist.target
 
@@ -16,6 +17,7 @@ def get_olivetti_faces():
     faces = fetch_olivetti_faces()
     
     faces.data = faces.data.astype(np.float32)
+    faces.target = faces.target.astype(np.int32)
 
     return faces.data, faces.target
 
@@ -23,6 +25,7 @@ def get_lfw():
     lfw = fetch_lfw_people(resize=1)
     
     lfw.data = lfw.data.astype(np.float32) / 255.0
+    lfw.target = lfw.target.astype(np.int32)
 
     return lfw.data, lfw.target
 
@@ -77,7 +80,7 @@ class ImageExperiment:
     def _plot(exp):
         f, ax = plt.subplots(math.ceil(exp.plot_count / exp.plots_per_row), min(exp.plots_per_row, exp.plot_count))
 
-        #f.set_size_inches(30, 30)
+        f.set_size_inches(30, 30)
         
         # Generate one-hot states 0 to hidden_count
         for j in range(exp.plot_count):

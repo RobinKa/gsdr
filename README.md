@@ -23,7 +23,7 @@ num_labels = 10
 
 # Build the GSDR network (only one layer for now)
 gsdr = GSDRStack()
-gsdr.add(input_count=data.shape[1], hidden_count=256, sparsity=0.1, forced_latent_count=labels.shape[0])
+gsdr.add(input_count=data.shape[1], hidden_count=256, sparsity=0.1, forced_latent_count=num_labels)
 
 forced_latents = np.eye(num_labels)
 

@@ -38,7 +38,7 @@ class GSDRStack:
 
             # Backwards inhibition
             if i != len(self._layers) - 1:
-                prev_sparse_count = self._layers_reversed[i - 1].sparse_count
+                prev_sparse_count = self._layers_reversed[i + 1].sparse_count
                 sorted_indices = np.argpartition(layer.reconstruction, -prev_sparse_count)
                 layer.reconstruction[sorted_indices[:-prev_sparse_count]] = 0
                 layer.reconstruction[sorted_indices[-prev_sparse_count:]] = 1
@@ -62,7 +62,7 @@ class GSDRLayer:
             self.forced_latent_weights = np.random.uniform(-forced_latent_init, forced_latent_init, (hidden_count, forced_latent_count))
     
     def calculate_sdr(self, inputs, forced_latents=None):
-        assert(len(inputs.shape) == 1 and inputs.shape[0] == self.input_count)
+        assert(inputs.shape == (self.input_count,))
         
         self.inputs = inputs
 
@@ -90,7 +90,7 @@ class GSDRLayer:
         # Reconstruct
         self.reconstruction = self.state @ self.sdr_weights
 
-        assert(len(self.reconstruction.shape) == 1 and self.reconstruction.shape[0] == self.input_count)
+        assert(self.reconstruction.shape == (self.input_count,))
 
     def reconstruct_from_forced_latents(self, forced_latents):
         assert(forced_latents.shape == (self.forced_latent_weights.shape[1],))
