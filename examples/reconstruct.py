@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QGridLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QGridLayout, QMessageBox
 from PyQt5.QtGui import QPixmap, QImage
 from gsdr import GSDRStack
 import numpy as np
@@ -8,6 +8,7 @@ import PIL
 import PIL.ImageQt
 import random
 import math
+import pickle
 
 def get_olivetti_faces():
     faces = fetch_olivetti_faces()
@@ -51,7 +52,7 @@ class SDRWidget(QWidget):
         self.hidden_count = hidden_count
 
         wh = math.ceil(math.sqrt(hidden_count))
-
+        
         for i in range(hidden_count):
             label = QPushButton(self)
             label.sdr_index = i
@@ -85,6 +86,7 @@ class ReconstructWindow(QWidget):
         self.hidden_count = gsdr._layers_reversed[0].hidden_count
 
         self.image_shape = image_shape
+        self.input_count = train_data.shape[1]
 
         self.train_count = train_count
 
@@ -122,16 +124,32 @@ class ReconstructWindow(QWidget):
         self.reconstruct_button.clicked.connect(self.visualize_image)
         self.layout.addWidget(self.reconstruct_button, 1, 0)
 
-        self.train_button = QPushButton("Train", self)
+        self.train_button = QPushButton("Train Model", self)
         self.train_button.clicked.connect(self.train)
         self.layout.addWidget(self.train_button, 1, 1)
 
+        self.load_button = QPushButton("Load Model", self)
+        self.load_button.clicked.connect(self.load_gsdr)
+        self.layout.addWidget(self.load_button, 2, 0)
+
+        self.save_button = QPushButton("Save Model", self)
+        self.save_button.clicked.connect(self.save_gsdr)
+        self.layout.addWidget(self.save_button, 2, 1)
+
         self.setLayout(self.layout) 
+
+    def alert(self, text, icon=QMessageBox.Information):
+        msg = QMessageBox()
+        msg.setIcon(icon)
+        msg.setText(text)
+        msg.setWindowTitle("Alert")
+        msg.exec_()
 
     def train(self):
         for i in range(self.train_count):
             d = self.train_data[np.random.randint(0, self.train_data.shape[0])]
             self.gsdr.train(d, 0.003)
+        self.alert("Training done")
 
     def visualize_image(self):
         original_image = random.choice(self.test_data)
@@ -156,16 +174,38 @@ class ReconstructWindow(QWidget):
         self.reconstructed_pixmap = QPixmap(pil_to_q_image(PIL.Image.fromarray(reconstructed_image, "L")))
         self.reconstructed_image.setPixmap(self.reconstructed_pixmap)
 
+    def save_gsdr(self):
+        try:
+            with open("gsdr.pickle", "wb") as f:
+                pickle.dump(self.gsdr, f)
+            self.alert("Saved")
+        except Exception as e:
+            self.alert("Could not save gsdr.pickle: %s" % e, QMessageBox.Critical)
+
+    def load_gsdr(self):
+        try:
+            with open("gsdr.pickle", "rb") as f:
+                gsdr = pickle.load(f)
+                if gsdr._layers[0].input_count != self.input_count or gsdr._layers_reversed[0].hidden_count != self.hidden_count:
+                    raise Exception("Loaded model has either invalid input or hidden size")
+                self.gsdr = gsdr
+
+            self.alert("Loaded")
+        except Exception as e:
+            self.alert("Could not load gsdr.pickle: %s" % e, QMessageBox.Critical)
+
 def main():
     app = QApplication(sys.argv)
 
-    data, targets, image_shape = get_olivetti_faces()
+    print("Loading data")
+
+    data, targets, image_shape = get_lfw()
 
     train_data = []
     test_data = []
 
     for d, t in zip(data, targets):
-        if t < 36:
+        if t < 5000:
             train_data.append(d)
         else:
             test_data.append(d)
@@ -178,10 +218,11 @@ def main():
 
     # Construct the network
     gsdr = GSDRStack()
-    gsdr.add(input_count=train_data.shape[1], hidden_count=256, sparsity=0.20)
-    gsdr.add(hidden_count=256, sparsity=0.15)
-    gsdr.add(hidden_count=256, sparsity=0.10)
-    gsdr.add(hidden_count=256, sparsity=0.05)
+    gsdr.add(input_count=train_data.shape[1], hidden_count=300, sparsity=0.2)
+    gsdr.add(hidden_count=300, sparsity=0.2)
+    gsdr.add(hidden_count=300, sparsity=0.2)
+    gsdr.add(hidden_count=300, sparsity=0.2)
+    gsdr.add(hidden_count=300, sparsity=0.2)
 
     wnd = ReconstructWindow(gsdr, train_data, test_data, image_shape, train_count=1000)
     wnd.show()
