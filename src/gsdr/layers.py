@@ -10,11 +10,12 @@ class GSDRStack:
         self._layers.append(GSDRLayer(input_count or self._layers[-1].hidden_count, hidden_count, sparsity, weights_init, forced_latent_count, forced_latent_init))
         self._layers_reversed = list(reversed(self._layers))
 
-    def train(self, inputs, learn_rate=0.001, forced_latents={}):
+    def train(self, inputs, learn_rate=0.001, learn_rate_bias=0.05, forced_latents=None):
         # Calculate the SDRs
         for i, layer in enumerate(self._layers):
             layer_input = inputs if i == 0 else self._layers[i - 1].state
-            layer.calculate_sdr(layer_input, forced_latents=forced_latents[i] if i in forced_latents else None)
+            layer.calculate_sdr(layer_input, 
+                                forced_latents=forced_latents[i] if forced_latents is not None and i in forced_latents else None)
 
         # Reconstruct backwards
         for layer in self._layers_reversed:
@@ -22,7 +23,7 @@ class GSDRStack:
 
         # Learn and make changes to the network
         for layer in self._layers:
-            layer.learn(learn_rate)
+            layer.learn(learn_rate, learn_rate_bias)
 
     def generate(self, state=None, forced_latents={}):
         assert(state is not None or (len(self._layers) - 1) in forced_latents)
@@ -34,7 +35,7 @@ class GSDRStack:
             if reversed_index in forced_latents:
                 layer.reconstruct_from_forced_latents(forced_latents[reversed_index])
             else:
-                layer.state = state if i == 0 else self._layers_reversed[i - 1].reconstruction
+                layer.state = np.array(state) if i == 0 else np.array(self._layers_reversed[i - 1].reconstruction)
                 layer.reconstruct()
 
             # Backwards inhibition
@@ -55,7 +56,7 @@ class GSDRStack:
         # Reconstruct backwards
         for i, layer in enumerate(self._layers_reversed):
             if i != 0:
-                layer.state = self._layers_reversed[i - 1].reconstruction
+                layer.state = np.array(self._layers_reversed[i - 1].reconstruction)
 
             layer.reconstruct()
 
@@ -87,10 +88,10 @@ class GSDRLayer:
     def calculate_sdr(self, inputs, forced_latents=None):
         assert(inputs.shape == (self.input_count,))
         
-        self.inputs = inputs
+        self.inputs = np.array(inputs)
 
         # Activate SDR
-        self.activation = self.sdr_bias + self.sdr_weights @ inputs
+        self.activation = self.sdr_bias + self.sdr_weights @ self.inputs
 
         if forced_latents is not None:
             assert(forced_latents.shape == (self.forced_latent_weights.shape[1],))
@@ -136,6 +137,7 @@ class GSDRLayer:
         # Reconstruct
         self.reconstruction = (csr_matrix(self.state.reshape(1, -1)) @ self.sdr_weights).reshape(-1)
 
-    def learn(self, learn_rate):
+    def learn(self, learn_rate, learn_rate_bias):
         self.sdr_weights -= learn_rate * csr_matrix(self.state.reshape(-1, 1)) @ (self.reconstruction - self.inputs).reshape(1, -1)
-        self.sdr_bias -= learn_rate * self.activation
+        
+        self.sdr_bias -= learn_rate_bias * (self.state - self.sparsity)

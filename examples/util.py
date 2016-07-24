@@ -70,7 +70,8 @@ class ImageExperiment:
                 self.forced_latents = self.forced_latents[p]
     
             for i in range(self.data_count):
-                self.gsdr.train(self.data[i], learn_rate=self.learn_rate, forced_latents={} if self.forced_latents is None else self.forced_latents[i])
+                self.gsdr.train(self.data[i], learn_rate=self.learn_rate, 
+                                forced_latents=None if self.forced_latents is None else self.forced_latents[i])
 
                 plot_iters += 1
                 if self.plot_iters is not None and plot_iters % self.plot_iters == 0:

@@ -14,17 +14,16 @@ input_size = (64, 64)
 input_count = data.shape[1]
 
 # Create the network
-hidden_count = 400
+hidden_count = 256
 print("Hidden count:", hidden_count)
 
 forced_latent_count = 40
 
 gsdr = GSDRStack()
-gsdr.add(input_count=input_count, hidden_count=hidden_count, sparsity=0.30)
-gsdr.add(hidden_count=hidden_count, sparsity=0.25)
-gsdr.add(hidden_count=hidden_count, sparsity=0.20)
+gsdr.add(input_count=input_count, hidden_count=hidden_count, sparsity=0.20)
 gsdr.add(hidden_count=hidden_count, sparsity=0.15)
-gsdr.add(hidden_count=hidden_count, sparsity=0.1, forced_latent_count=forced_latent_count)
+gsdr.add(hidden_count=hidden_count, sparsity=0.10)
+gsdr.add(hidden_count=hidden_count, sparsity=0.05, forced_latent_count=forced_latent_count)
 
 last_layer_index = len(gsdr._layers)-1
 face_forced_latents = np.eye(forced_latent_count)
@@ -59,5 +58,5 @@ def plot(exp):
     plt.tight_layout()
     plt.show()
 
-exp = ImageExperiment(gsdr, data, input_size, epochs=1000, target=target, plot_func=plot, forced_latents=forced_latents, plot_iters=4000, learn_rate=0.01)
+exp = ImageExperiment(gsdr, data, input_size, epochs=60, target=target, plot_func=plot, forced_latents=forced_latents, plot_iters=3000, learn_rate=0.003)
 exp.run()

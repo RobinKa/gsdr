@@ -2,14 +2,14 @@ from distutils.core import setup
 
 setup(
     name="gsdr",
-    version= "0.1.0",
+    version= "0.1.1",
     description="Generative Sparse Distributed Representations, a fast generative model",
     author="Robin Kahlow (Toraxxx)",
     author_email="xtremegosugaming@gmail.com",
     maintainer="Robin Kahlow (Toraxxx)",
     maintainer_email="xtremegosugaming@gmail.com",
     url="https://github.com/ToraxXx/gsdr",
-    requires=["numpy"],
+    requires=["numpy", "scipy"],
     license= "MIT",
     package_dir={"": "src"},
     packages=["gsdr"],
