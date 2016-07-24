@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import csr_matrix
 
 class GSDRStack:
     def __init__(self):
@@ -35,6 +36,28 @@ class GSDRStack:
             else:
                 layer.state = state if i == 0 else self._layers_reversed[i - 1].reconstruction
                 layer.reconstruct()
+
+            # Backwards inhibition
+            if i != len(self._layers) - 1:
+                prev_sparse_count = self._layers_reversed[i + 1].sparse_count
+                sorted_indices = np.argpartition(layer.reconstruction, -prev_sparse_count)
+                layer.reconstruction[sorted_indices[:-prev_sparse_count]] = 0
+                layer.reconstruction[sorted_indices[-prev_sparse_count:]] = 1
+
+        return self._layers[0].reconstruction
+
+    def get_reconstructed(self, inputs):
+        # Calculate the SDRs
+        for i, layer in enumerate(self._layers):
+            layer_input = inputs if i == 0 else self._layers[i - 1].state
+            layer.calculate_sdr(layer_input)
+
+        # Reconstruct backwards
+        for i, layer in enumerate(self._layers_reversed):
+            if i != 0:
+                layer.state = self._layers_reversed[i - 1].reconstruction
+
+            layer.reconstruct()
 
             # Backwards inhibition
             if i != len(self._layers) - 1:
@@ -88,7 +111,7 @@ class GSDRLayer:
 
     def reconstruct(self):
         # Reconstruct
-        self.reconstruction = self.state @ self.sdr_weights
+        self.reconstruction = (csr_matrix(self.state.reshape(1, -1)) @ self.sdr_weights).reshape(-1)
 
         assert(self.reconstruction.shape == (self.input_count,))
 
@@ -111,11 +134,8 @@ class GSDRLayer:
         assert(np.flatnonzero(self.state).shape[0] == self.sparse_count)
 
         # Reconstruct
-        self.reconstruction = self.state @ self.sdr_weights
+        self.reconstruction = (csr_matrix(self.state.reshape(1, -1)) @ self.sdr_weights).reshape(-1)
 
     def learn(self, learn_rate):
-        self.sdr_weights -= learn_rate * np.outer(self.state, (self.reconstruction - self.inputs))
-
-        assert(self.sdr_weights.shape == (self.hidden_count, self.input_count))
-
+        self.sdr_weights -= learn_rate * csr_matrix(self.state.reshape(-1, 1)) @ (self.reconstruction - self.inputs).reshape(1, -1)
         self.sdr_bias -= learn_rate * self.activation
