@@ -1,10 +1,13 @@
 # gsdr
 Generative Sparse Distributed Representations, a fast generative model written in Python (Original C++ implementation https://github.com/222464/GSDR)
 
+[Demonstration of the SDRs it learns and its reconstructions on faces](https://www.youtube.com/watch?v=m_xwH8cTMuo)
+
 # Dependencies
 - Python 3
 - Python libraries
     - numpy
+    - scipy
     
 # Installation
 `pip install gsdr` or clone and `python setup.py install`

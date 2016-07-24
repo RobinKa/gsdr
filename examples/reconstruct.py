@@ -55,7 +55,7 @@ class SDRWidget(QWidget):
         for i in range(hidden_count):
             label = QPushButton(self)
             label.sdr_index = i
-            
+            label.setFixedSize(16, 16)
             label.clicked.connect(self.toggle_sdr)
             self.labels.append(label)
 
@@ -104,13 +104,15 @@ class ReconstructWindow(QWidget):
         self.original_pixmap = QPixmap()
         self.original_image = QLabel(self)
         self.original_image.setPixmap(self.original_pixmap)
-        #self.original_image.setScaledContents(True)
+        self.original_image.setFixedSize(128, 128)
+        self.original_image.setScaledContents(True)
         self.layout.addWidget(self.original_image, 0, 0)
 
         self.reconstructed_pixmap = QPixmap()
         self.reconstructed_image = QLabel(self)
         self.reconstructed_image.setPixmap(self.reconstructed_pixmap)
-        #self.reconstructed_image.setScaledContents(True)
+        self.reconstructed_image.setFixedSize(128, 128)
+        self.reconstructed_image.setScaledContents(True)
         self.layout.addWidget(self.reconstructed_image, 0, 1)
 
         self.sdr_widget = SDRWidget(self.hidden_count, self.reconstruct_sdr)
