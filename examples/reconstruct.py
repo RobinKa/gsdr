@@ -159,8 +159,6 @@ def main():
 
     data, targets, image_shape = get_olivetti_faces()
 
-    data = data[np.random.permutation(len(data))]
-
     train_data = []
     test_data = []
 
